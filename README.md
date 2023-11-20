@@ -3,7 +3,7 @@
 
 [x] Deve ser possível criar um usuário <br>
 [ ] Deve ser possível identificar o usuário entre as requisições <br>
-[ ] Deve ser possível registrar uma refeição feita, com as seguintes informações <br>
+[x] Deve ser possível registrar uma refeição feita, com as seguintes informações <br>
 - Nome
 - Descrição
 - Data e Hora

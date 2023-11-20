@@ -19,4 +19,22 @@ export async function dailyRoutes(app: FastifyInstance) {
 
         return reply.status(201).send()
     })
+
+    app.post('/meal', async (request, reply) => {
+        const mealBodySchema = z.object({
+            name: z.string(),
+            description: z.string(),
+            isFit: z.boolean()
+        })
+
+        const { name, description, isFit } = mealBodySchema.parse(request.body)
+
+        await knex('meal').insert({
+            name,
+            description,
+            isFit,
+        })
+
+        return reply.status(201).send()
+    })
 }

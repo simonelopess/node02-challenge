@@ -7,5 +7,11 @@ declare module 'knex/types/tables' {
       id: string
       name: string
     },
+    meal: {
+      name: string,
+      description: string,
+      isFit: boolean,
+      created_at: string
+    }
   }
 }
