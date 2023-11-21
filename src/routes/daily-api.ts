@@ -2,24 +2,10 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { randomUUID } from 'node:crypto'
 import { knex } from '../database'
+import { checkSessionIdExists } from '../middlewares/check-session-id-exists'
 
 
 export async function dailyRoutes(app: FastifyInstance) {
-    app.post('/user', async (request, reply) => {
-        const userBodySchema = z.object({
-            name: z.string(),
-        }) 
-
-        const { name } = userBodySchema.parse(request.body);
-
-        await knex('user').insert({
-            id: randomUUID(), 
-            name,
-        })
-
-        return reply.status(201).send()
-    })
-
     app.post('/meal', async (request, reply) => {
         const mealBodySchema = z.object({
             name: z.string(),
@@ -29,12 +15,67 @@ export async function dailyRoutes(app: FastifyInstance) {
 
         const { name, description, isFit } = mealBodySchema.parse(request.body)
 
+        let sessionId = request.cookies.sessionId
+
+        if (!sessionId) {
+            sessionId = randomUUID()
+      
+            reply.setCookie('sessionId', sessionId, {
+              path: '/',
+              maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+            })
+          }
+
         await knex('meal').insert({
+            id: randomUUID(),
             name,
             description,
             isFit,
+            session_id: sessionId
         })
 
         return reply.status(201).send()
+    })
+
+    app.get(
+        '/meal',
+        {
+          preHandler: [checkSessionIdExists],
+        },
+        async (request) => {
+          const { sessionId } = request.cookies
+    
+          const meal = await knex('meal')
+            .where('session_id', sessionId)
+            .select()
+    
+          return { meal }
+        },
+      )
+
+    app.get(
+        '/meal/:id',
+    {
+        preHandler: [checkSessionIdExists],
+    },
+    async (request) => {
+        const getMealsParamsSchema = z.object({
+            id: z.string().uuid(),
+        })
+
+        const { id } = getMealsParamsSchema.parse(request.params)
+
+        const { sessionId } = request.cookies
+
+        const meals = await knex('meal')
+        .where({
+            session_id: sessionId,
+            id, 
+        })
+        .first()
+
+        return {
+            meals,
+        }
     })
 }
