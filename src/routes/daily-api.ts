@@ -78,4 +78,26 @@ export async function dailyRoutes(app: FastifyInstance) {
             meals,
         }
     })
+
+    app.delete('/meal/:id', 
+    {
+      preHandler: [checkSessionIdExists],
+    },
+    async (request, reply) => {
+      const getMealsParamsSchema = z.object({
+        id: z.string().uuid(),
+      })
+      const {id} = getMealsParamsSchema.parse(request.params)
+
+      const { sessionId} = request.cookies
+
+      const meals = await knex('meal')
+      .where({
+        session_id: sessionId,
+        id, 
+      })
+      .del()
+
+      return reply.status(201).send()
+    })
 }
