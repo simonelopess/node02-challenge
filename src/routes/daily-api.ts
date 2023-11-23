@@ -100,4 +100,41 @@ export async function dailyRoutes(app: FastifyInstance) {
 
       return reply.status(201).send()
     })
+
+    app.put('/meal/:id', {
+      preHandler: [checkSessionIdExists]
+    }, 
+     async(request, reply)  => {
+      const getMealsParamsSchema = z.object({
+        id: z.string().uuid(),
+      })
+
+      const mealBodySchema = z.object({
+        name: z.string(),
+        description: z.string(),
+        isFit: z.boolean()
+      })
+
+
+      const {id} = getMealsParamsSchema.parse(request.params)
+      const { name, description, isFit } = mealBodySchema.parse(request.body)
+
+      const { sessionId} = request.cookies
+
+      const meals = await knex('meal')
+      .where({
+          session_id: sessionId,
+          id, 
+      })
+      .update({
+        id,
+        name, 
+        description, 
+        isFit,
+        session_id: sessionId
+      })
+
+      return reply.send(201).send()
+     }
+    )
 }
