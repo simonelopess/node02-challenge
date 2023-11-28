@@ -52,6 +52,34 @@ export async function dailyRoutes(app: FastifyInstance) {
           return { meal }
         },
       )
+    
+      app.get(
+        '/meal/metrics',
+        {
+          preHandler: [checkSessionIdExists],
+        },
+        async (request) => {
+          const { sessionId } = request.cookies
+    
+          const quantifyMealsRegistered = await knex('meal')
+            .where('session_id', sessionId)
+            .count({meals: '*'}) 
+
+            const quantifyMealsRegisteredInDiet = await knex('meal')
+            .where('isFit', 1).andWhere('session_id', sessionId)
+            .count({isFit: 'isFit'})
+    
+            const quantifyMealsRegisteredOutDiet = await knex('meal')
+            .where('isFit', 0).andWhere('session_id', sessionId)
+            .count({isFit: 'isFit'})
+
+          return { 
+            quantitiy: quantifyMealsRegistered[0].meals, 
+            isFit: quantifyMealsRegisteredInDiet[0].isFit, 
+            isNotFit:  quantifyMealsRegisteredOutDiet[0].isFit, 
+          }
+        },
+      )
 
     app.get(
         '/meal/:id',
